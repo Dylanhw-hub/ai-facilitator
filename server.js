@@ -1,28 +1,33 @@
-import express from 'express';
-import cors from 'cors';
-import dotenv from 'dotenv';
-import Anthropic from '@anthropic-ai/sdk';
-
-dotenv.config();
+const express = require('express');
+const cors = require('cors');
+require('dotenv').config();
+const Anthropic = require('@anthropic-ai/sdk');
 
 const app = express();
 const port = process.env.PORT || 5000;
 
-app.use(cors({
+// CORS configuration
+const corsOptions = {
   origin: '*',
-  methods: ['GET', 'POST'],
+  methods: ['GET', 'POST', 'OPTIONS'],
   allowedHeaders: ['Content-Type'],
-}));
+  credentials: false
+};
+
+app.use(cors(corsOptions));
 app.use(express.json());
 
-const client = new Anthropic({
-  apiKey: process.env.ANTHROPIC_API_KEY,
+// Additional CORS headers
+app.use((req, res, next) => {
+  res.header('Access-Control-Allow-Origin', '*');
+  res.header('Access-Control-Allow-Methods', 'GET, POST, PUT, DELETE, OPTIONS');
+  res.header('Access-Control-Allow-Headers', 'Content-Type, Authorization');
+  next();
 });
 
-interface Message {
-  role: 'user' | 'assistant';
-  content: string;
-}
+const client = new Anthropic.default({
+  apiKey: process.env.ANTHROPIC_API_KEY,
+});
 
 const SECTION_4_CONTEXT = `You are an AI facilitator for an educational learning experience about the I-Model—a practice for working with AI thoughtfully in education.
 
@@ -62,15 +67,12 @@ Let's facilitate a reflective conversation.`;
 
 app.post('/api/facilitator', async (req, res) => {
   try {
+    console.log('Received request:', { isOpening: req.body.isOpening, messagesCount: req.body.messages?.length });
+
     const { messages, isOpening } = req.body;
 
-    // Convert message format for Claude API
-    const conversationHistory: Message[] = messages.map((msg: any) => ({
-      role: msg.role === 'user' ? 'user' : 'assistant',
-      content: msg.content,
-    }));
-
     if (isOpening) {
+      console.log('Starting facilitation...');
       // Generate the opening message
       const response = await client.messages.create({
         model: 'claude-opus-4-5-20251101',
@@ -87,10 +89,17 @@ app.post('/api/facilitator', async (req, res) => {
       const responseText =
         response.content[0].type === 'text' ? response.content[0].text : '';
 
+      console.log('Sending response:', responseText.substring(0, 50) + '...');
       return res.status(200).json({ response: responseText });
     }
 
     // For ongoing conversation, get the facilitator response
+    console.log('Continuing conversation with', messages.length, 'messages');
+    const conversationHistory = messages.map((msg) => ({
+      role: msg.role === 'user' ? 'user' : 'assistant',
+      content: msg.content,
+    }));
+
     const response = await client.messages.create({
       model: 'claude-opus-4-5-20251101',
       max_tokens: 500,
@@ -101,10 +110,11 @@ app.post('/api/facilitator', async (req, res) => {
     const responseText =
       response.content[0].type === 'text' ? response.content[0].text : '';
 
+    console.log('Sending response:', responseText.substring(0, 50) + '...');
     return res.status(200).json({ response: responseText });
   } catch (error) {
     console.error('Error:', error);
-    return res.status(500).json({ error: 'Internal server error' });
+    return res.status(500).json({ error: 'Internal server error', details: error.message });
   }
 });
 

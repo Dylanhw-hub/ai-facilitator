@@ -1,28 +1,16 @@
-import express from 'express';
-import cors from 'cors';
-import dotenv from 'dotenv';
-import Anthropic from '@anthropic-ai/sdk';
-
-dotenv.config();
+const express = require('express');
+const path = require('path');
+require('dotenv').config();
+const Anthropic = require('@anthropic-ai/sdk');
 
 const app = express();
-const port = process.env.PORT || 5000;
+const port = process.env.PORT || 3000;
 
-app.use(cors({
-  origin: '*',
-  methods: ['GET', 'POST'],
-  allowedHeaders: ['Content-Type'],
-}));
 app.use(express.json());
 
-const client = new Anthropic({
+const client = new Anthropic.default({
   apiKey: process.env.ANTHROPIC_API_KEY,
 });
-
-interface Message {
-  role: 'user' | 'assistant';
-  content: string;
-}
 
 const SECTION_4_CONTEXT = `You are an AI facilitator for an educational learning experience about the I-Model—a practice for working with AI thoughtfully in education.
 
@@ -60,18 +48,15 @@ CRITICAL CONSTRAINTS:
 
 Let's facilitate a reflective conversation.`;
 
+// API endpoint
 app.post('/api/facilitator', async (req, res) => {
   try {
+    console.log('Received request:', { isOpening: req.body.isOpening, messagesCount: req.body.messages?.length });
+
     const { messages, isOpening } = req.body;
 
-    // Convert message format for Claude API
-    const conversationHistory: Message[] = messages.map((msg: any) => ({
-      role: msg.role === 'user' ? 'user' : 'assistant',
-      content: msg.content,
-    }));
-
     if (isOpening) {
-      // Generate the opening message
+      console.log('Starting facilitation...');
       const response = await client.messages.create({
         model: 'claude-opus-4-5-20251101',
         max_tokens: 500,
@@ -87,10 +72,16 @@ app.post('/api/facilitator', async (req, res) => {
       const responseText =
         response.content[0].type === 'text' ? response.content[0].text : '';
 
+      console.log('Sending response:', responseText.substring(0, 50) + '...');
       return res.status(200).json({ response: responseText });
     }
 
-    // For ongoing conversation, get the facilitator response
+    console.log('Continuing conversation with', messages.length, 'messages');
+    const conversationHistory = messages.map((msg) => ({
+      role: msg.role === 'user' ? 'user' : 'assistant',
+      content: msg.content,
+    }));
+
     const response = await client.messages.create({
       model: 'claude-opus-4-5-20251101',
       max_tokens: 500,
@@ -101,13 +92,23 @@ app.post('/api/facilitator', async (req, res) => {
     const responseText =
       response.content[0].type === 'text' ? response.content[0].text : '';
 
+    console.log('Sending response:', responseText.substring(0, 50) + '...');
     return res.status(200).json({ response: responseText });
   } catch (error) {
     console.error('Error:', error);
-    return res.status(500).json({ error: 'Internal server error' });
+    return res.status(500).json({ error: 'Internal server error', details: error.message });
   }
 });
 
+// Serve React static files (after build)
+app.use(express.static(path.join(__dirname, 'build')));
+
+// Fallback to index.html for SPA routing
+app.get('*', (req, res) => {
+  res.sendFile(path.join(__dirname, 'build', 'index.html'));
+});
+
 app.listen(port, () => {
-  console.log(`🎓 Facilitator server running on http://localhost:${port}`);
+  console.log(`🎓 Facilitator running on http://localhost:${port}`);
+  console.log('API available at /api/facilitator');
 });

@@ -15,6 +15,7 @@
     "cors": "^2.8.5",
     "dotenv": "^17.2.3",
     "express": "^5.2.1",
+    "http-proxy-middleware": "^3.0.5",
     "react": "^19.2.1",
     "react-dom": "^19.2.1",
     "react-scripts": "5.0.1",
@@ -23,7 +24,7 @@
   },
   "scripts": {
     "start": "react-scripts start",
-    "server": "ts-node server.ts",
+    "server": "node server.js",
     "dev": "npm run server & npm start",
     "build": "react-scripts build",
     "test": "react-scripts test",
@@ -48,6 +49,7 @@
     ]
   },
   "devDependencies": {
+    "@types/cors": "^2.8.19",
     "@types/express": "^4.17.25",
     "@vercel/node": "^5.5.15",
     "nodemon": "^3.1.11",
