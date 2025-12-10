@@ -33,7 +33,8 @@ function App() {
     setLoading(true);
 
     try {
-      const response = await fetch('/api/facilitator', {
+      const apiUrl = process.env.REACT_APP_API_URL || 'http://localhost:5000';
+      const response = await fetch(`${apiUrl}/api/facilitator`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
@@ -67,7 +68,8 @@ function App() {
     setLoading(true);
 
     try {
-      const response = await fetch('/api/facilitator', {
+      const apiUrl = process.env.REACT_APP_API_URL || 'http://localhost:5000';
+      const response = await fetch(`${apiUrl}/api/facilitator`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
