@@ -11,7 +11,15 @@ function App() {
   const [input, setInput] = useState('');
   const [loading, setLoading] = useState(false);
   const [conversationStarted, setConversationStarted] = useState(false);
-  const [touchpoint] = useState(1); // Default to touchpoint 1 (after Pit Wall)
+
+  // Read touchpoint from URL parameter (?touchpoint=1)
+  const getTouchpointFromUrl = (): number => {
+    const params = new URLSearchParams(window.location.search);
+    const touchpointParam = params.get('touchpoint');
+    return touchpointParam ? parseInt(touchpointParam, 10) : 1;
+  };
+
+  const [touchpoint] = useState(getTouchpointFromUrl());
   const messagesEndRef = useRef<HTMLDivElement>(null);
 
   const scrollToBottom = () => {
