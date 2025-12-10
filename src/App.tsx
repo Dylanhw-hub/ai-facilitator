@@ -35,7 +35,7 @@ function App() {
     if (!conversationStarted) {
       startFacilitation();
     }
-  }, [conversationStarted]);
+  }, [conversationStarted, touchpoint]);
 
   const startFacilitation = async () => {
     setConversationStarted(true);
