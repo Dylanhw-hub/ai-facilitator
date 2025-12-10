@@ -11,6 +11,7 @@ function App() {
   const [input, setInput] = useState('');
   const [loading, setLoading] = useState(false);
   const [conversationStarted, setConversationStarted] = useState(false);
+  const [touchpoint] = useState(1); // Default to touchpoint 1 (after Pit Wall)
   const messagesEndRef = useRef<HTMLDivElement>(null);
 
   const scrollToBottom = () => {
@@ -40,7 +41,7 @@ function App() {
         },
         body: JSON.stringify({
           messages: [],
-          section: 4,
+          touchpoint: touchpoint,
           isOpening: true,
         }),
       });
@@ -74,7 +75,7 @@ function App() {
         },
         body: JSON.stringify({
           messages: [...messages, userMessage],
-          section: 4,
+          touchpoint: touchpoint,
           isOpening: false,
         }),
       });
