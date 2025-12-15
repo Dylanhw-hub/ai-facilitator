@@ -11,6 +11,7 @@ function App() {
   const [input, setInput] = useState('');
   const [loading, setLoading] = useState(false);
   const [conversationStarted, setConversationStarted] = useState(false);
+  const [facilitationEnded, setFacilitationEnded] = useState(false);
 
   // Read touchpoint from URL parameter (?touchpoint=1)
   const getTouchpointFromUrl = (): number => {
@@ -98,6 +99,32 @@ function App() {
     }
   };
 
+  const handleEndFacilitation = async () => {
+    setLoading(true);
+    try {
+      const response = await fetch('/api/facilitator', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          messages: messages,
+          touchpoint: touchpoint,
+          isOpening: false,
+          isSummary: true,
+        }),
+      });
+
+      const data = await response.json();
+      setMessages(prev => [...prev, { role: 'facilitator', content: data.response }]);
+      setFacilitationEnded(true);
+    } catch (error) {
+      console.error('Error ending facilitation:', error);
+    } finally {
+      setLoading(false);
+    }
+  };
+
   return (
     <div className="App">
       <div className="facilitator-container">
@@ -122,19 +149,34 @@ function App() {
           <div ref={messagesEndRef} />
         </div>
 
-        <form onSubmit={handleSendMessage} className="input-form">
-          <input
-            type="text"
-            value={input}
-            onChange={(e) => setInput(e.target.value)}
-            placeholder="Share your thoughts..."
-            disabled={loading}
-            className="input-field"
-          />
-          <button type="submit" disabled={loading} className="send-button">
-            {loading ? 'Sending...' : 'Send'}
-          </button>
-        </form>
+        {!facilitationEnded && (
+          <form onSubmit={handleSendMessage} className="input-form">
+            <input
+              type="text"
+              value={input}
+              onChange={(e) => setInput(e.target.value)}
+              placeholder="Share your thoughts..."
+              disabled={loading}
+              className="input-field"
+            />
+            <button type="submit" disabled={loading} className="send-button">
+              {loading ? 'Sending...' : 'Send'}
+            </button>
+            <button
+              type="button"
+              onClick={handleEndFacilitation}
+              disabled={loading}
+              className="end-button"
+            >
+              End
+            </button>
+          </form>
+        )}
+        {facilitationEnded && (
+          <div className="facilitation-ended">
+            <p>Thank you for your reflection. You can close this window or go back to the course.</p>
+          </div>
+        )}
       </div>
     </div>
   );

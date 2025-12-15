@@ -208,7 +208,7 @@ module.exports = async (req, res) => {
   }
 
   try {
-    const { messages, isOpening, touchpoint = 1 } = req.body;
+    const { messages, isOpening, touchpoint = 1, isSummary = false } = req.body;
 
     // Get the context for this specific touchpoint
     const facilitatorContext = getFacilitatorContext(touchpoint);
@@ -236,6 +236,35 @@ UNIVERSAL FACILITATION RULES:
           {
             role: 'user',
             content: 'Please start the facilitation with the opening question.',
+          },
+        ],
+      });
+
+      const responseText =
+        response.content[0].type === 'text' ? response.content[0].text : '';
+
+      return res.status(200).json({ response: responseText });
+    }
+
+    if (isSummary) {
+      const conversationHistory = messages.map((msg) => ({
+        role: msg.role === 'user' ? 'user' : 'assistant',
+        content: msg.content,
+      }));
+
+      const summarySystemPrompt = `${systemPrompt}
+
+You are now concluding the facilitation. The conversation is ending. Provide a brief summary (2-3 sentences) that names one key insight they've surfaced and affirms them to take it forward. Do NOT ask another question. Just affirm and close.`;
+
+      const response = await client.messages.create({
+        model: 'claude-opus-4-5-20251101',
+        max_tokens: 300,
+        system: summarySystemPrompt,
+        messages: [
+          ...conversationHistory,
+          {
+            role: 'user',
+            content: 'Please provide a brief closing summary of our conversation and affirm what we discussed.',
           },
         ],
       });
