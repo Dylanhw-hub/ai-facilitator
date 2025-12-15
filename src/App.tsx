@@ -174,7 +174,7 @@ function App() {
         )}
         {facilitationEnded && (
           <div className="facilitation-ended">
-            <p>Thank you for your reflection. You can close this window or go back to the course.</p>
+            <p>Thank you for your reflection. Click next above to continue with the lesson.</p>
           </div>
         )}
       </div>
